@@ -1,6 +1,6 @@
 # For redis connection
 REDIS = {
-    'host': '192.168.21.102',
+    'host': 'ip-172-31-32-12.eu-west-1.compute.internal',
     'port': 6379,
     'db': 0
 }
