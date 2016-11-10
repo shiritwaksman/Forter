@@ -7,17 +7,33 @@ class CreditCardHandler(tornado.web.RequestHandler):
     def initialize(self, tokenizer):
         self.tokenizer = tokenizer
 
-    def get(self, creditcard):
+    def get(self, token = None):
         """retrieving a stored credit card"""
-        self.write('{"credit-card":"' + self.tokenizer[creditcard] + '"}')
+        message = ""
+        try:
+            if token in self.tokenizer.keys():
+                message = '{"credit-card":"' + token + '"}'
+            else:
+                message = 'token does not exist'
+        except:
+            message = 'Invalid Input'
+
+        self.write(message)
 
     def post(self):
         """"inserting a new credit card"""
-        creditcard = str(tornado.escape.json_decode(self.request.body)["credit-card"])
-        token = str(uuid.uuid3(uuid.NAMESPACE_DNS, creditcard))
-        self.tokenizer[token] = creditcard
-        # The response is a unique id that represents the credit card token
-        self.write('{"token" : "' + token + '"}')
+        message = 'Invalid Input'
+        try:
+            creditcard = str(tornado.escape.json_decode(self.request.body)["credit-card"])
+        except: pass
+        else:
+            if creditcard:
+                token = str(uuid.uuid3(uuid.NAMESPACE_DNS, creditcard))
+                self.tokenizer[token] = creditcard
+                # The response is a unique id that represents the credit card token
+                message = '{"token" : "' + token + '"}'
+
+        self.write(message)
 
 
 def make_app():
