@@ -3,10 +3,8 @@ import uuid
 import re
 import tornado.ioloop
 import tornado.web
-import config
-import external_storage
 
-class CreditCardHandler(tornado.web.RequestHandler):
+class MainHandler(tornado.web.RequestHandler):
 
     def initialize(self, storage_instance):
         self.storage_instance = storage_instance
@@ -53,20 +51,3 @@ class CreditCardHandler(tornado.web.RequestHandler):
                     message = tornado.escape.json_encode(output)
 
         self.write(message)
-
-
-def make_app(storage_instance):
-    return tornado.web.Application([
-        (r"/creditcard/([^/]+)", CreditCardHandler, dict(storage_instance=storage_instance)),
-        (r"/creditcard", CreditCardHandler, dict(storage_instance=storage_instance))
-    ])
-
-
-def main():
-    storage_instance = external_storage.ExternalStorage()
-    app = make_app(storage_instance)
-    app.listen(config.PORT)
-    tornado.ioloop.IOLoop.current().start()
-
-if __name__ == "__main__":
-    main()
