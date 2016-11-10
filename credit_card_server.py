@@ -1,21 +1,21 @@
 import uuid
 
 import re
-import redis
 import tornado.ioloop
 import tornado.web
 import config
+import external_storage
 
 class CreditCardHandler(tornado.web.RequestHandler):
 
-    def initialize(self, redis_instance):
-        self.redis_instance = redis_instance
+    def initialize(self, storage_instance):
+        self.storage_instance = storage_instance
 
     def get(self, token=None):
         """retrieving a stored credit card"""
-        if self.redis_instance.exists(token):
+        if self.storage_instance.exists(token):
             output = {
-                'credit-card': self.redis_instance.get(token)
+                'credit-card': self.storage_instance.get(token)
             }
 
             message = tornado.escape.json_encode(output)
@@ -44,7 +44,7 @@ class CreditCardHandler(tornado.web.RequestHandler):
                               'For example: 1234-5678-9101-1121'
                 else:
                     token = str(uuid.uuid5(uuid.NAMESPACE_DNS, credit_card))
-                    self.redis_instance.set(token, credit_card)
+                    self.storage_instance.set(token, credit_card)
 
                     # The response is a unique id that represents the credit card token
                     output = {
@@ -55,18 +55,16 @@ class CreditCardHandler(tornado.web.RequestHandler):
         self.write(message)
 
 
-def make_app(redis_instance):
+def make_app(storage_instance):
     return tornado.web.Application([
-        (r"/creditcard/([^/]+)", CreditCardHandler, dict(redis_instance=redis_instance)),
-        (r"/creditcard", CreditCardHandler, dict(redis_instance=redis_instance))
+        (r"/creditcard/([^/]+)", CreditCardHandler, dict(storage_instance=storage_instance)),
+        (r"/creditcard", CreditCardHandler, dict(storage_instance=storage_instance))
     ])
 
 
 def main():
-    redis_instance = redis.StrictRedis(host=config.REDIS['host'],
-                                       port=config.REDIS['port'],
-                                       db=config.REDIS['db'])
-    app = make_app(redis_instance)
+    storage_instance = external_storage.ExternalStorage()
+    app = make_app(storage_instance)
     app.listen(config.PORT)
     tornado.ioloop.IOLoop.current().start()
 
