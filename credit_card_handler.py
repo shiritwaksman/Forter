@@ -7,6 +7,7 @@ import tornado.web
 class MainHandler(tornado.web.RequestHandler):
 
     def initialize(self, storage_instance):
+        """"Init external storage instance"""
         self.storage_instance = storage_instance
 
     def get(self, token=None):

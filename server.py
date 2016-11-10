@@ -4,16 +4,22 @@ import config
 import external_storage
 import credit_card_handler
 
-def make_app(storage_instance):
+def router(storage_instance):
+    """Routing http requests to http handlers"""
     return tornado.web.Application([
         (r"/creditcard/([^/]+)", credit_card_handler.MainHandler, dict(storage_instance=storage_instance)),
         (r"/creditcard", credit_card_handler.MainHandler, dict(storage_instance=storage_instance))
     ])
 
 def main():
+    """Main Logic to run the server"""
+
+    # init server
     storage_instance = external_storage.ExternalStorage()
-    app = make_app(storage_instance)
+    app = router(storage_instance)
     app.listen(config.PORT)
+
+    # run
     tornado.ioloop.IOLoop.current().start()
 
 if __name__ == "__main__":
