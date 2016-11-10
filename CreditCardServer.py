@@ -1,7 +1,10 @@
+import uuid
+
+import re
+import redis
 import tornado.ioloop
 import tornado.web
-import uuid
-import redis
+import config
 
 class CreditCardHandler(tornado.web.RequestHandler):
 
@@ -34,14 +37,20 @@ class CreditCardHandler(tornado.web.RequestHandler):
             if not credit_card:
                 message = 'No value exist for key "credit-card" in the request'
             else:
-                token = str(uuid.uuid5(uuid.NAMESPACE_DNS, credit_card))
-                self.redis_instance.set(token, credit_card)
+                is_credit_card_valid = re.match('([\d]+-)+([\d]+)', credit_card, re.M | re.I)
 
-                # The response is a unique id that represents the credit card token
-                output = {
-                    'token': token
-                }
-                message = tornado.escape.json_encode(output)
+                if not is_credit_card_valid:
+                    message = 'Valid credit card should contain only digits and hyphens. ' \
+                              'For example: 1234-5678-9101-1121'
+                else:
+                    token = str(uuid.uuid5(uuid.NAMESPACE_DNS, credit_card))
+                    self.redis_instance.set(token, credit_card)
+
+                    # The response is a unique id that represents the credit card token
+                    output = {
+                        'token': token
+                    }
+                    message = tornado.escape.json_encode(output)
 
         self.write(message)
 
@@ -54,9 +63,11 @@ def make_app(redis_instance):
 
 
 def main():
-    redis_instance = redis.StrictRedis(host='192.168.21.102', port=6379, db=0)
+    redis_instance = redis.StrictRedis(host=config.REDIS['host'],
+                                       port=config.REDIS['port'],
+                                       db=config.REDIS['db'])
     app = make_app(redis_instance)
-    app.listen(8081)
+    app.listen(config.PORT)
     tornado.ioloop.IOLoop.current().start()
 
 if __name__ == "__main__":
